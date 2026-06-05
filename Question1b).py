@@ -5,6 +5,7 @@ Created on Wed Jun  3 11:11:23 2026
 @author: shaew
 """
 #Computational Finance Assignment 2 question 1b)
+#This code uses a lot of memory, if needed cut of some entries in line 47 and 108
 import numpy as np
 import matplotlib.pyplot as plt
 r=0.02
@@ -16,9 +17,10 @@ Theta=100
 rho=0.1
 T=1
 K=100
-np.random.seed(0)
+
 
 def CorrBrownian(dt,R): #R is the amount of replications
+    np.random.seed(5)
     N=int(T/dt)
     Z=np.random.normal(loc=0,scale=np.sqrt(dt),size=(2,N*R)) 
     L=np.array([[1,0],[rho,np.sqrt(1-rho**2)]])
@@ -42,12 +44,13 @@ def Simulate(CorrZ):
     return np.exp(-r*T)*np.maximum(0.5*S_1[-1]+0.5*S_2[-1]-K,0)
 
 DTs=[0.01]
-Rs=[10**4,10**5,10**6,5*10**6]
+Rs=[10**4,10**5,10**6,5*10**6,10**7]
 print("fixed dt")
-print(f"{'Replications':<15} {'dt':<10} {'Mean Price':<15} {'Std Error':<12}")
-print("-" * 55)
+print(f"{'Replications':<15} {'dt':<10} {'Mean Price':<15} {'Std Error':<12} {'95% CI':<20}")
+print("-" * 67)
 means=[]
 SEs=[]
+CIs=[]
 for i in Rs:
     for j in DTs:
         DiscountedPayoffs=Simulate(CorrBrownian(j,i))
@@ -55,7 +58,11 @@ for i in Rs:
         means.append(Mean)
         SE=np.std(DiscountedPayoffs)/np.sqrt(i)
         SEs.append(SE)
-        print(f"{i:<15} {j:<10.3f} {Mean:<15.4f} {SE:<12.4f}")
+        lower_ci = Mean - 1.96 * SE
+        upper_ci = Mean + 1.96 * SE
+        CIs.append(SE*1.96)
+
+        print(f"{i:<15} {j:<10.3f} {Mean:<15.4f} {SE:<12.4f} [{lower_ci:.4f}, {upper_ci:.4f}]")
 
 
 plt.figure(figsize=(10, 6))
@@ -70,6 +77,7 @@ plt.loglog(Rs, reference_line, '--', color='red', alpha=0.6, label='Theoretical 
 
 plt.xlabel('Number of Replications (R)')
 plt.ylabel('Standard Error (SE)')
+
 plt.title('Monte Carlo Convergence: Standard Error vs. Replications, dt=0.01')
 plt.legend()
 plt.grid(True, which="both", ls="-", alpha=0.2)
@@ -83,6 +91,7 @@ ReferencePrice=means[-1]
 plt.figure(figsize=(10, 8))
 plt.show()
 plt.loglog(Rs, means, marker='o', label='Mean Price')
+plt.errorbar(Rs, means, yerr=CIs, fmt='-o', capsize=5, label='Mean Price w/ 95% CI')
 plt.axhline(y=ReferencePrice, color='r', linestyle='--', label=f'Best Estimate ({ReferencePrice:.4f})')
 plt.xlabel('Sample Size (R)')
 plt.ylabel('Estimated Price')
@@ -96,13 +105,14 @@ plt.show()
 
 
 
-DTs=[0.25,0.1,0.05,0.1**2,0.1**2*0.5,0.1**3]
-Rs=[5*10**5]
+DTs=[1,0.5,0.25,0.1,0.05,0.1**2,0.1**2*0.5,0.1**3]
+Rs=[10**6]
 print("fixed R")
-print(f"{'Replications':<15} {'dt':<10} {'Mean Price':<15} {'Std Error':<12}")
-print("-" * 55)
+print(f"{'Replications':<15} {'dt':<10} {'Mean Price':<15} {'Std Error':<12} {'95% CI':<20}")
+print("-" * 67)
 means=[]
 SEs=[]
+CIs=[]
 for i in Rs:
     for j in DTs:
         DiscountedPayoffs=Simulate(CorrBrownian(j,i))
@@ -110,12 +120,16 @@ for i in Rs:
         means.append(Mean)
         SE=np.std(DiscountedPayoffs)/np.sqrt(i)
         SEs.append(SE)
-        print(f"{i:<15} {j:<10.3f} {Mean:<15.4f} {SE:<12.4f}")
+        lower_ci = Mean - 1.96 * SE
+        upper_ci = Mean + 1.96 * SE
+        CIs.append(1.96*SE)
+        print(f"{i:<15} {j:<10.3f} {Mean:<15.4f} {SE:<12.4f} [{lower_ci:.4f}, {upper_ci:.4f}]")
 
 ReferencePrice=means[-1]
 plt.figure(figsize=(12, 8))
 plt.show()
 plt.gca().invert_xaxis()
+plt.errorbar(DTs, means, yerr=CIs, fmt='-o', capsize=5, label='Mean Price w/ 95% CI')
 plt.loglog(DTs, means, marker='o', label='Mean Price')
 plt.axhline(y=ReferencePrice, color='r', linestyle='--', label=f'Best Estimate ({ReferencePrice:.4f})')
 plt.xlabel('dt')
