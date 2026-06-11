@@ -39,7 +39,7 @@ def Simulate(CorrZ):
         dW_1=CorrZ[0][i]
         dW_2=CorrZ[1][i]
         S_1[i+1]=S_1[i]*np.exp((r-0.5*Sigma1**2)*dt+Sigma1*dW_1)
-        S_2[i+1]=S_2[i]+kappa*(Theta-S_2[i])*dt+Sigma2*np.sqrt(np.maximum(S_2[i],0))*dW_2
+        S_2[i+1]=S_2[i]+r*S_2[i]*dt+Sigma2*np.sqrt(np.maximum(S_2[i],0))*dW_2
         #We use the truncation method to make sure the sqrt doesnt go negative
     return np.exp(-r*T)*np.maximum(0.5*S_1[-1]+0.5*S_2[-1]-K,0)
 
